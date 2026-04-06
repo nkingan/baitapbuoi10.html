@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Danh sách sinh viên</title>
+</head>
+
+<body>
+
+<h2>Danh sách sinh viên</h2>
+
+<input type="file" id="fileInput" accept=".xlsx, .csv"><br><br>
+
+<table border="1">
+  <thead>
+    <tr>
+      <th>Họ tên</th>
+      <th>MSSV</th>
+      <th>Khóa</th>
+      <th>Khoa</th>
+      <th>Email</th>
+    </tr>
+  </thead>
+  <tbody id="output"></tbody>
+</table>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+
+// ===== CLASS =====
+class Student {
+  constructor(fullName, studentId) {
+    this.fullName = fullName;
+    this.studentId = studentId;
+  }
+
+ getEmail() {
+  let cleanName = this.removeVietnameseTones(this.fullName);
+  let parts = cleanName.replace(/\(.*?\)/g, "").trim().split(" ");
+
+  let lastName = parts[parts.length - 1];
+  let firstLetters = "";
+
+  for (let i = 0; i < parts.length - 1; i++) {
+    firstLetters += parts[i][0];
+  }
+
+  return lastName.toLowerCase() +
+         firstLetters.toLowerCase() + "." +
+         this.studentId.toLowerCase() +
+         "@hvnh.edu.vn";
+}
+
+  getCourse() {
+    return this.studentId.substring(0, 2);
+  }
+
+  getFaculty() {
+    let code = this.studentId.substring(3, 6);
+
+    switch (code) {
+      case "401": return "Tài chính hoặc Ngân hàng";
+      case "402": return "Kế toán - Kiểm toán";
+      case "403": return "Quản trị kinh doanh";
+      case "404": return "Công nghệ thông tin";
+      case "405": return "Kinh doanh quốc tế";
+      case "406": return "Luật";
+      case "407": return "Kinh tế";
+      case "408": return "Khoa học dữ liệu";
+      case "751": return "Ngoại ngữ";
+      default: return "Không xác định";
+    }
+  }
+}
+
+// ===== XỬ LÝ FILE =====
+document.getElementById("fileInput").addEventListener("change", function(e) {
+  let file = e.target.files[0];
+  if (!file) return;
+
+  let fileName = file.name.toLowerCase();
+
+  // ===== CSV =====
+  if (fileName.endsWith(".csv")) {
+    let reader = new FileReader();
+
+    reader.onload = function(e) {
+      let data = e.target.result;
+      let rows = data.split("\n");
+      let html = "";
+
+      rows.forEach((row, index) => {
+        if (index === 0) return; 
+
+        let cols = row.split(",");
+
+        let studentId = cols[1]?.replace(/"/g, "").trim();
+        let fullName = cols[2]?.replace(/"/g, "").trim();
+
+        if (!studentId || !fullName) return;
+
+        let s = new Student(fullName, studentId);
+
+        html += `
+          <tr>
+            <td>${s.fullName}</td>
+            <td>${s.studentId}</td>
+            <td>${s.getCourse()}</td>
+            <td>${s.getFaculty()}</td>
+            <td>${s.getEmail()}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById("output").innerHTML = html;
+    };
+
+    reader.readAsText(file, "UTF-8");
+  }
+
+  // ===== EXCEL =====
+  else if (fileName.endsWith(".xlsx")) {
+    let reader = new FileReader();
+
+    reader.onload = function(e) {
+      let data = new Uint8Array(e.target.result);
+
+      let workbook = XLSX.read(data, { type: "array" });
+      let sheet = workbook.Sheets[workbook.SheetNames[0]];
+      let json = XLSX.utils.sheet_to_json(sheet);
+
+      let html = "";
+
+      json.forEach(row => {
+        let studentId = row["Mã SV"];
+        let fullName = row["Họ tên"];
+
+        if (!studentId || !fullName) return;
+
+        let s = new Student(fullName, studentId);
+
+        html += `
+          <tr>
+            <td>${s.fullName}</td>
+            <td>${s.studentId}</td>
+            <td>${s.getCourse()}</td>
+            <td>${s.getFaculty()}</td>
+            <td>${s.getEmail()}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById("output").innerHTML = html;
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  else {
+    alert("Chỉ hỗ trợ file .xlsx hoặc .csv");
+  }
+});
+
+</script>
+
+</body>
+</html>
+cdnjs.cloudflare.com
