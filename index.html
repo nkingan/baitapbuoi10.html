@@ -27,30 +27,35 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
-
-// ===== CLASS =====
-class Student {
+  class Student {
   constructor(fullName, studentId) {
     this.fullName = fullName;
     this.studentId = studentId;
   }
 
- getEmail() {
-  let cleanName = this.removeVietnameseTones(this.fullName);
-  let parts = cleanName.replace(/\(.*?\)/g, "").trim().split(" ");
-
-  let lastName = parts[parts.length - 1];
-  let firstLetters = "";
-
-  for (let i = 0; i < parts.length - 1; i++) {
-    firstLetters += parts[i][0];
+  removeVietnameseTones(str) {
+    return str.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D");
   }
 
-  return lastName.toLowerCase() +
-         firstLetters.toLowerCase() + "." +
-         this.studentId.toLowerCase() +
-         "@hvnh.edu.vn";
-}
+  getEmail() {
+    let cleanName = this.removeVietnameseTones(this.fullName);
+    let parts = cleanName.replace(/\(.*?\)/g, "").trim().split(" ");
+
+    let lastName = parts[parts.length - 1];
+    let firstLetters = "";
+
+    for (let i = 0; i < parts.length - 1; i++) {
+      firstLetters += parts[i][0];
+    }
+
+    return lastName.toLowerCase() +
+           firstLetters.toLowerCase() + "." +
+           this.studentId.toLowerCase() +
+           "@hvnh.edu.vn";
+  }
 
   getCourse() {
     return this.studentId.substring(0, 2);
